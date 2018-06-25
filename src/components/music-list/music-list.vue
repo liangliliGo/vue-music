@@ -28,13 +28,16 @@
   import Scroll from 'base/scroll/scroll'
   import Loading from 'base/loading/loading'
   import SongList from 'base/song-list/song-list'
-  import {prefixStyle} from 'common/js/dom'
+  import { prefixStyle } from 'common/js/dom'
+  import { mapActions } from 'vuex'
+  import { playlistMixin } from 'common/js/mixin'
 
   const transform = prefixStyle('transform')
   const backdrop = prefixStyle('backdrop-filter')    //仅兼容iphone
   const RESERVED_HEIGHT = 40
 
   export default {
+    mixins: [playlistMixin],
     props: {
       bgImage: {
         type: String,
@@ -49,7 +52,7 @@
         default: ''
       }
     },
-    data() {
+    data () {
       return {
         scrollY: 0
       }
@@ -59,27 +62,42 @@
         return `background-image: url(${this.bgImage})`
       }
     },
-    created() {
+    created () {
       this.probeType = 3
       this.listenScroll = true
     },
-    mounted() {
+    mounted () {
       this.imageHeight = this.$refs.bgImage.clientHeight
       this.minTranslateY = -this.imageHeight + RESERVED_HEIGHT
       this.$refs.list.$el.style.top = `${this.imageHeight}px`
     },
     methods: {
+      handlePlaylist (playlist) {
+        const bottom = playlist.length > 0 ? '60px' : ''
+        this.$refs.list.$el.style.bottom = bottom
+        this.$refs.list.refresh()
+      },
       back () {
         this.$router.back()
       },
       random () {
-
+        this.randomPlay({
+          list: this.songs
+        })
       },
-      scroll(pos) {
+      scroll (pos) {
         this.scrollY = pos.y
       },
-      selectItem(item, index) {
-      }
+      selectItem (item, index) {
+        this.selectPlay({
+          list: this.songs,
+          index
+        })
+      },
+      ...mapActions([
+        'selectPlay',
+        'randomPlay'
+      ])
     },
     watch: {
       scrollY (newY) {
@@ -88,19 +106,19 @@
         let scale = 1
         let blur = 0
         const percent = Math.abs(newY / this.imageHeight)
-        if(newY > 0) {
+        if (newY > 0) {
 
           scale = 1 + percent
           zIndex = 10
         }
         this.$refs.layer.style[transform] = `translate3d(0, ${translateY}px, 0)`
         this.$refs.filter.style[backdrop] = `blur(${blur}px)`
-        if(newY < this.minTranslateY) {
+        if (newY < this.minTranslateY) {
           zIndex = 10
           this.$refs.bgImage.style.paddingTop = 0
           this.$refs.bgImage.style.height = `${RESERVED_HEIGHT}px`
           this.$refs.playBtn.style.display = 'none'
-        }else{
+        } else {
           this.$refs.bgImage.style.paddingTop = '70%'
           this.$refs.bgImage.style.height = 0
           this.$refs.playBtn.style.display = ''
@@ -186,7 +204,7 @@
         left: 0
         width: 100%
         height: 100%
-        background: rgba(1,17,27,0.4)
+        background: rgba(1, 17, 27, 0.4)
     .bg-layer
       position: relative
       height: 100%
