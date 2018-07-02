@@ -15,14 +15,15 @@ export function shuffle (arr) {
   return _arr
 }
 
+/*搜索框节流*/
 export function debounce (func, delay) {
   let timer
 
-  return function(...args) {
-    if(timer) {
+  return function (...args) {
+    if (timer) {
       clearTimeout(timer)
     }
-    timer = setTimeout(()=> {
+    timer = setTimeout(function () {
       func.apply(this, args)
     }, delay)
   }
