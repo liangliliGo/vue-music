@@ -9,7 +9,7 @@
             <span class="clear" @click="showConfirm"><i class="icon-clear"></i></span>
           </h1>
         </div>
-        <Scroll class="list-content" ref="listContent" :data="sequenceList">
+        <Scroll class="list-content" ref="listContent" :data="sequenceList" :refreshDelay="refreshDelay">
           <transition-group ref="list" name="list" tag="ul">
             <li class="item" v-for="(item, index) in sequenceList" :key="item.id" @click="selectItem(item, index)">
               <i class="current" :class="getCurrentIcon(item)"></i>
@@ -34,6 +34,7 @@
         </div>
       </div>
       <confirm ref="confirm" @confirm="confirmClear" text="是否清空播放列表" confirmBtnText="清空"></confirm>
+      <add-Song ref="addSong"></add-Song>
     </div>
   </transition>
 </template>
@@ -45,7 +46,10 @@
   import { shuffle } from 'common/js/utils'
   import {playerMixin} from 'common/js/mixin'
 
+  import AddSong from 'components/add-song/add-song'
+
   export default {
+    mixins: [playerMixin],
     data () {
       return {
         showFlag: false,
@@ -100,7 +104,7 @@
         }
       },
       addSong () {
-
+        this.$refs.addSong.show()
       },
       confirmClear () {
         this.deleteSongList()
@@ -113,7 +117,8 @@
     },
     components: {
       Scroll,
-      Confirm
+      Confirm,
+      AddSong
     },
     watch: {
       currentSong(newSong, oldSong) {

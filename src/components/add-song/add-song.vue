@@ -11,11 +11,30 @@
         <search-box ref="searchBox" placeholder="搜索歌曲" @query="onQueryChange"></search-box>
       </div>
       <div class="shortcut" v-show="!query">
-
+        <switches :switches="switches" :currentIndex="currentIndex" @switch="switchItem"></switches>
+        <div class="list-wrapper">
+          <scroll :refreshDelay="refreshDelay" ref="songList" v-if="currentIndex === 0" class="list-scroll" :data="playHistory">
+            <div class="list-inner">
+              <song-list :songs="playHistory" @select="selectSong"></song-list>
+            </div>
+          </scroll>
+          <scroll :refreshDelay="refreshDelay" ref="searchList" v-if="currentIndex === 1" class="list-scroll"
+                  :data="searchHistory">
+            <div class="list-inner">
+              <search-list @delete="deleteSearchHistory" @select="addQuery" :searches="searchHistory"></search-list>
+            </div>
+          </scroll>
+        </div>
       </div>
       <div class="search-result" v-show="query">
-        <suggest></suggest>
+        <suggest :query="query" :showSinger="showSinger" @select="selectSuggest" @listScroll="blurInput"></suggest>
       </div>
+      <top-tip ref="topTip">
+        <div class="tip-title">
+          <i class="icon-ok"></i>
+          <span class="text">1首歌曲已经添加到播放列表</span>
+        </div>
+      </top-tip>
     </div>
   </transition>
 </template>
@@ -25,33 +44,69 @@
   import SearchList from 'base/search-list/search-list'
   import Scroll from 'base/scroll/scroll'
   import Suggest from 'components/suggest/suggest'
-  import {mapGetters, mapActions} from 'vuex'
+  import { mapGetters, mapActions } from 'vuex'
   import Song from 'common/js/song'
+  import { searchMixin } from 'common/js/mixin'
+  import Switches from 'base/switches/switches'
+  import TopTip from 'base/top-tip/top-tip'
 
   export default {
-    data() {
+    mixins: [searchMixin],
+    data () {
       return {
         showFlag: false,
-        query: ''
+        showSinger: false,
+        switches: [
+          {name: '最近播放'},
+          {name: '搜索历史'}
+        ],
+        currentIndex: 0
       }
     },
+    computed: {
+      ...mapGetters([
+        'playHistory'
+      ])
+    },
     methods: {
-      show() {
+      show () {
         this.showFlag = true
+        setTimeout(() => {
+          if (this.currentIndex === 0) {
+            this.$refs.songList.refresh()
+          } else {
+            this.$refs.searchList.refresh()
+          }
+        }, 20)
       },
-      hide() {
+      hide () {
         this.showFlag = false
       },
-      onQueryChange(query) {
-        this.query = query
-      }
+      selectSuggest () {
+        this.$refs.topTip.show()
+        this.saveSearch()
+      },
+      switchItem(index) {
+        this.currentIndex = index
+      },
+      selectSong(song, index) {
+        if(index !== 0) {
+          this.insertSong(new Song(song))
+          this.$refs.topTip.show()
+        }
+      },
+      ...mapActions([
+        'insertSong'
+      ])
     },
     components: {
       SearchBox,
       SongList,
       SearchList,
       Scroll,
-      Suggest
+      Suggest,
+      Switches,
+      TopTip
     }
   }
 </script>
@@ -65,9 +120,10 @@
     bottom: 0
     width: 100%
     z-index: 200
-    &.slider-enter-active, &.slider-leave-active
+    background: $color-background
+    &.slide-enter-active, &.slide-leave-active
       transition: all 0.3s
-    &.slider-enter, &.slider-leave-to
+    &.slide-enter, &.slide-leave-to
       transform: translate3d(100%, 0, 0)
     .header
       position: relative
@@ -108,13 +164,11 @@
       text-align: center
       padding: 18px 0
       font-size: 0
-        .icon-ok
-          font-size: $font-size-medium
-          color: $color-theme
-          margin-right: 4px
-        .text
-          font-size: $font-size-medium
-          color: $color-text
-  .main
-    position: relative
+      .icon-ok
+        font-size: $font-size-medium
+        color: $color-theme
+        margin-right: 4px
+      .text
+        font-size: $font-size-medium
+        color: $color-text
 </style>
