@@ -96,7 +96,7 @@
       </div>
     </transition>
     <playlist ref="playlist"></playlist>
-    <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime"
+    <audio ref="audio" :src="currentSong.url" @play="ready" @error="error" @timeupdate="updateTime"
            @ended="end"></audio>
   </div>
 </template>
@@ -214,6 +214,7 @@
 
         if(this.playlist.length === 1) {
           this.loop()
+          return
         }else{
           let index = this.currentIndex + 1
           if (index === this.playlist.length) {
@@ -223,7 +224,7 @@
           if (!this.playing) {
             this.togglePlaying()
           }
-//        this.songReady = false
+        this.songReady = false
         }
       },
       prev () {
@@ -232,6 +233,7 @@
         }
         if(this.playlist.length === 1) {
           this.loop()
+          return
         }else{
           let index = this.currentIndex - 1
           if (index < 0) {
@@ -241,7 +243,7 @@
           if (!this.playing) {
             this.togglePlaying()
           }
-//        this.songReady = false
+        this.songReady = false
         }
       },
       loop () {
@@ -288,6 +290,7 @@
       },
       getLyric () {
         this.currentSong.getLyric().then((lyric) => {
+          /*防止快速切换导致歌与词不匹配*/
           if (this.currentSong.lyric !== lyric) {
             return
           }
@@ -418,6 +421,8 @@
           this.playingLyric = ''
           this.currentLineNum = 0
         }
+        /*快速切换节流设置，避免快苏切换，快速切换只执行一次
+       */
         clearTimeout(this.timer)
         this.timer = setTimeout(() => {
           this.$refs.audio.play()
